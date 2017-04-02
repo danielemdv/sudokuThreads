@@ -8,7 +8,7 @@ void *runner(void *param); /* threads call this function */
 typedef struct {
 	int fila;
 	int columna;
-	int funcion; //que funcion va a correr el hilo (esto deberia ser un apuntador a la funcion si queremos ser muy tight)
+	int funcion; //que funcion va a correr el hilo
 } parametros;
 
 
