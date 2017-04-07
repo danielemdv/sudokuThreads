@@ -1,12 +1,15 @@
-#include <pthread.h> 
+#include <pthread.h>
 #include <stdio.h>
 
 int matSudoku[9][9]; /* this data is shared by the thread(s) */
 int resSudoku[27]; //this will hold boolean values depending of the threads' results.
 
+int semaphore = 1; //only one thread will be able to be in the critical section at a time. so start at one.
+
 void *runner(void *param); /* threads call this function */
 
 typedef struct {
+	int id; //estoy agregando id...
 	int row;
 	int column;
 	int function; //que funcion va a correr el hilo (esto deberia ser un apuntador a la funcion si queremos ser muy tight)
@@ -21,7 +24,7 @@ void squareChecker(parametros *p);
 
 
 int main(int argc, char *argv[])
-{ 
+{
 	int i = 0;
 	int j = 0;
 
@@ -49,13 +52,15 @@ int main(int argc, char *argv[])
 
 	//rowCheckers
 	for(i = 0; i < 9; i+=1){
+		p[i].id = i;
 		p[i].row = i;
 		p[i].column = 0;
 		p[i].function = 0;
 	}
-	
-	//columnChecker	
+
+	//columnChecker
 	for(i = 9; i < 18; i+=1){
+		p[i].id = i;
 		p[i].row = 0;
 		p[i].column = i;
 		p[i].function = 1;
@@ -63,8 +68,9 @@ int main(int argc, char *argv[])
 
 	//squareCheckers
 	for(i = 18; i < 27; i+=1){
+		p[i].id = i;
 		int j = i - 18; //to normalize things a little bit.
-		
+
 		if(j < 3)
 		{
 			p[i].row = 0;
@@ -78,8 +84,13 @@ int main(int argc, char *argv[])
 			p[i].row = 6;
 			p[i].column = (j-6)*3;
 		}
-		
+
 		p[i].function = 2;
+	}
+
+  //DEBUG! printout of the structs.
+	for(i = 0; i < 27; i+=1){
+		printf("Struct parametros-- ID: %d, ROW: %d, COLUMN: %d, FUNCTION: %d\n", p[i].id, p[i].row , p[i].column , p[i].function);
 	}
 
 
@@ -92,26 +103,26 @@ int main(int argc, char *argv[])
 	pthread_attr_init(&attr);
 	/* create the thread */
 
+
 	//Crear nuestros threads!!!!
 	for(i = 0; i < 27; i+=1){
 		pthread_create(&tid,&attr,runner,&p[i]); //crear cada thread con su 'parametros' respectivos
 	}
 
 
-
-	pthread_create(&tid,&attr,runner,argv[1]); /* wait for the thread to exit */
-	pthread_join(tid,NULL); 
+	//Aquí esta el join pero lo dejamos porque no debemos usar join...
+	//pthread_join(tid,NULL); //chance esto si deberia de estar.
 
 	return 0;
 }
 
 
 void *runner(void *param)
-{ 
+{
 	//ejecutar funcion segun param pasado
-	
+
 	parametros* p = param; //This seems to work... le damos 'forma' al void*
-	
+
 	//Esto lo debo sustituir para ser mas elegante y usar apuntadores a funciones
 	if(p->function == 0)
 	{
@@ -129,22 +140,43 @@ void *runner(void *param)
 	{
 		printf("Something would be really wrong..");
 	}
-	
 
 	pthread_exit(0);
 }
 
 //funcion que sera 0
 void rowChecker(parametros *p){
-	
-	printf("Soy un rowChecker!!");
+	/*El row checker checara que esten todos los numeros del 1 al 9*/
 
+	printf("Soy un rowChecker con id %d\n", p->id);
+	/*
+	int arr[9]; //array to hold true values (1) for the numbers we have found.
+	int i = 0;
+
+	for(i = 0; i < 9; i = i+1 ){
+		//leer del sudoku no deberia de ser bloqueado.
+		int lec = matSudoku[p->row][i] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
+		fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec);
+		arr[lec] = 1; //switch the entry of the array to true
+	}
+
+	int flag = 1;
+	for(i = 0; i < 9; i = i+1){
+		if(arr[i] == 0){
+			flag = 0; //if any number is missing, flag is set to zero
+		}
+	}
+
+	//store our boolean result
+	resSudoku[p->row] = flag;
+	fprintf(stderr, "%s %d\n", "Saliendo de rowChecker y el resultado fue:", flag);
+	*/
 }
 
 //funcion que sera 1
 void columnChecker(parametros *p){
 
-	printf("Soy un columnChecker!!");
+	printf("Soy un columnChecker con id %d\n", p->id);
 
 }
 
@@ -152,7 +184,7 @@ void columnChecker(parametros *p){
 
 //funcion que sera 2
 void squareChecker(parametros *p){
-	
-	printf("Soy un squareChecker!!");
-	
+
+	printf("Soy un squareChecker con id %d\n", p->id);
+
 }
