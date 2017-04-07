@@ -22,7 +22,6 @@ void squareChecker(parametros *p);
 
 
 
-
 int main(int argc, char *argv[])
 {
 	int i = 0;
@@ -62,7 +61,7 @@ int main(int argc, char *argv[])
 	for(i = 9; i < 18; i+=1){
 		p[i].id = i;
 		p[i].row = 0;
-		p[i].column = i;
+		p[i].column = i-9;
 		p[i].function = 1;
 	}
 
@@ -96,7 +95,7 @@ int main(int argc, char *argv[])
 
 
 
-	pthread_t tid; /* the thread identifier */
+	pthread_t tid[27]; /* the thread identifier */
 	pthread_attr_t attr; /* set of thread attributes */
 
 	/* get the default attributes */
@@ -106,12 +105,16 @@ int main(int argc, char *argv[])
 
 	//Crear nuestros threads!!!!
 	for(i = 0; i < 27; i+=1){
-		pthread_create(&tid,&attr,runner,&p[i]); //crear cada thread con su 'parametros' respectivos
+		pthread_create(&tid[i],&attr,runner,&p[i]); //crear cada thread con su 'parametros' respectivos
 	}
 
 
 	//Aquí esta el join pero lo dejamos porque no debemos usar join...
-	//pthread_join(tid,NULL); //chance esto si deberia de estar.
+
+	for(i = 0; i < 27; i+=1){
+			pthread_join(tid[i],NULL); //esperar a todos los threads...
+	}
+
 
 	return 0;
 }
@@ -149,7 +152,7 @@ void rowChecker(parametros *p){
 	/*El row checker checara que esten todos los numeros del 1 al 9*/
 
 	printf("Soy un rowChecker con id %d\n", p->id);
-	/*
+
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
 
@@ -168,9 +171,9 @@ void rowChecker(parametros *p){
 	}
 
 	//store our boolean result
-	resSudoku[p->row] = flag;
+	resSudoku[p->id] = flag;
 	fprintf(stderr, "%s %d\n", "Saliendo de rowChecker y el resultado fue:", flag);
-	*/
+
 }
 
 //funcion que sera 1
