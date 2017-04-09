@@ -159,8 +159,8 @@ void rowChecker(parametros *p){
 	for(i = 0; i < 9; i = i+1 ){
 		//leer del sudoku no deberia de ser bloqueado.
 		int lec = matSudoku[p->row][i] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
-		fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec);
-		arr[lec] = 1; //switch the entry of the array to true
+		//fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec); //DEBUG
+		arr[lec] = 1; //switch the entry of the array to true. This will crack if we read something that's not a number between 1 and 9 (which makes an index of 0 to 8)
 	}
 
 	int flag = 1;
@@ -174,12 +174,52 @@ void rowChecker(parametros *p){
 	resSudoku[p->id] = flag;
 	fprintf(stderr, "%s %d\n", "Saliendo de rowChecker y el resultado fue:", flag);
 
+	//This is where it would add itself to a mutex protected int. It can call a function called iApprove() or smth like that
+	//that acquires the lock and increments the variable.
+
+	/*
+	  if(flag){
+	   iApprove(); 
+	  }
+	 */
+
 }
 
 //funcion que sera 1
 void columnChecker(parametros *p){
 
 	printf("Soy un columnChecker con id %d\n", p->id);
+	
+	int arr[9]; //array to hold true values (1) for the numbers we have found.
+	int i = 0;
+
+	for(i = 0; i < 9; i = i+1 ){
+		//leer del sudoku no deberia de ser bloqueado.
+		int lec = matSudoku[i][p->column] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
+		fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec);
+		arr[lec] = 1; //switch the entry of the array to true
+	}
+
+	int flag = 1;
+	for(i = 0; i < 9; i = i+1){
+		if(arr[i] == 0){
+			flag = 0; //if any number is missing, flag is set to zero
+		}
+	}
+
+	//store our boolean result
+	resSudoku[p->id] = flag;
+	fprintf(stderr, "%s %d\n", "Saliendo de columnChecker y el resultado fue:", flag);
+
+	//This is where it would add itself to a mutex protected int. It can call a function called iApprove() or smth like that
+	//that acquires the lock and increments the variable.
+
+	/*
+	  if(flag){
+	   iApprove(); 
+	  }
+	 */
+	
 
 }
 
@@ -189,5 +229,9 @@ void columnChecker(parametros *p){
 void squareChecker(parametros *p){
 
 	printf("Soy un squareChecker con id %d\n", p->id);
+	
+	
+	
+	
 
 }
