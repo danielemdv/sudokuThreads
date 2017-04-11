@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	for(i = 0; i < 27; i+=1){
 		pthread_join(tid[i],NULL); //esperar a todos los threads...
 	}
-	
+
 	for(i = 0; i < 27; i+=1){
 		printf("Resultado de thread %d: %d\n",i,resSudoku[i]);
 	}
@@ -183,7 +183,7 @@ void rowChecker(parametros *p){
 
 	/*
 	  if(flag){
-	   iApprove(); 
+	   iApprove();
 	  }
 	 */
 
@@ -193,14 +193,13 @@ void rowChecker(parametros *p){
 void columnChecker(parametros *p){
 
 	printf("Soy un columnChecker con id %d\n", p->id);
-	
+
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
 
 	for(i = 0; i < 9; i = i+1 ){
 		//leer del sudoku no deberia de ser bloqueado.
 		int lec = matSudoku[i][p->column] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
-		fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec);
 		arr[lec] = 1; //switch the entry of the array to true
 	}
 
@@ -220,10 +219,10 @@ void columnChecker(parametros *p){
 
 	/*
 	  if(flag){
-	   iApprove(); 
+	   iApprove();
 	  }
 	 */
-	
+
 
 }
 
@@ -233,35 +232,33 @@ void columnChecker(parametros *p){
 void squareChecker(parametros *p){
 
 	printf("Soy un squareChecker con id %d\n", p->id);
-	
+
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
 	int j = 0;
 	int row,column;
 	row = p->row;
 	column = p->column;
-	
+
 	int lec = -1;
-	
-	
-	for(i = row; i < row + 2; i += 1 ){
+
+
+	for(i = row; i < row + 3; i += 1 ){
 		//leer del sudoku no deberia de ser bloqueado.
-		for(j = column; j < column + 2; j += 1){
+		for(j = column; j < column + 3; j += 1){
 			lec = matSudoku[i][j] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
-			
-			fprintf(stderr, "%s %d\n", "Leyendo square lec: ", lec);
 			arr[lec] = 1; //switch the entry of the array to true
 		}
 	}
-	
-	
+
+
 	int flag = 1;
 	for(i = 0; i < 9; i = i+1){
 		if(arr[i] != 1){
 			flag = 0; //if any number is missing, flag is set to zero
 		}
 	}
-	
+
 	//store our boolean result
 	resSudoku[p->id] = flag;
 	fprintf(stderr, "%s %d\n", "Saliendo de squareChecker y el resultado fue:", flag);
@@ -271,7 +268,7 @@ void squareChecker(parametros *p){
 
 	/*
 	  if(flag){
-	   iApprove(); 
+	   iApprove();
 	  }
 	*/
 }
