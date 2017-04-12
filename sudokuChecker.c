@@ -1,8 +1,22 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int matSudoku[9][9]; /* this data is shared by the thread(s) */
 int resSudoku[27]; //this will hold boolean values depending of the threads' results.
+int acumRes = 0;
+
+pthread_mutex_t mutexres; //Variable to be able to mutex lock critical sections of threads.
+
+/*
+Help hint!!
+
+we use the lock with:
+	pthread_mutex_lock (&mutexres);
+		//critical section, accesing common memory etc etc
+	pthread_mutex_unlock (&mutexres);
+
+*/
 
 int semaphore = 1; //only one thread will be able to be in the critical section at a time. so start at one.
 
@@ -26,6 +40,8 @@ int main(int argc, char *argv[])
 {
 	int i = 0;
 	int j = 0;
+
+	pthread_mutex_init(&mutexres, NULL); //Inicializamos correctamente la variable mutex
 
 	parametros p[27]; //creamos un arreglo de estructuras tipo 'parametros'
 
@@ -87,13 +103,6 @@ int main(int argc, char *argv[])
 		p[i].function = 2;
 	}
 
-  //DEBUG! printout of the structs.
-	for(i = 0; i < 27; i+=1){
-		printf("Struct parametros-- ID: %d, ROW: %d, COLUMN: %d, FUNCTION: %d\n", p[i].id, p[i].row , p[i].column , p[i].function);
-	}
-
-
-
 
 	pthread_t tid[27]; /* the thread identifiers */
 	pthread_attr_t attr; /* set of thread attributes */
@@ -110,17 +119,27 @@ int main(int argc, char *argv[])
 
 
 	//Aquí esta el join pero lo dejamos porque no debemos usar join...
-
+/*
 	for(i = 0; i < 27; i+=1){
 		pthread_join(tid[i],NULL); //esperar a todos los threads...
 	}
+*/
+
+//En vez de un join, un sleep
+	sleep(0.5); //sleep for half a second
+
 
 	for(i = 0; i < 27; i+=1){
 		printf("Resultado de thread %d: %d\n",i,resSudoku[i]);
 	}
 
+	if(acumRes == 27){
+		printf("%s\n", "El sudoku es valido!!");
+	}else{
+		printf("%s\n", "El sudoku NO es valido!!");
+	}
 
-	return 0;
+	return 0; //exit normally
 }
 
 
@@ -155,15 +174,12 @@ void *runner(void *param)
 void rowChecker(parametros *p){
 	/*El row checker checara que esten todos los numeros del 1 al 9*/
 
-	printf("Soy un rowChecker con id %d\n", p->id);
-
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
 
 	for(i = 0; i < 9; i = i+1 ){
 		//leer del sudoku no deberia de ser bloqueado.
 		int lec = matSudoku[p->row][i] - 1; //-1 porque estamos leyendo nums de 1 a 9 del sudoku y necesitamos de 0 a 8.
-		//fprintf(stderr, "%s %d\n", "Leyendo lec: ", lec); //DEBUG
 		arr[lec] = 1; //switch the entry of the array to true. This will crack if we read something that's not a number between 1 and 9 (which makes an index of 0 to 8)
 	}
 
@@ -176,16 +192,13 @@ void rowChecker(parametros *p){
 
 	//store our boolean result
 	resSudoku[p->id] = flag;
-	//fprintf(stderr, "%s %d\n", "Saliendo de rowChecker y el resultado fue:", flag);
 
-	//This is where it would add itself to a mutex protected int. It can call a function called iApprove() or smth like that
-	//that acquires the lock and increments the variable.
-
-	/*
-	  if(flag){
-	   iApprove();
-	  }
-	 */
+	//Proteccion de seccion critica por acceso a variable comun entre threads.
+	if(flag){
+		pthread_mutex_lock (&mutexres);
+			acumRes += 1;
+		pthread_mutex_unlock (&mutexres);
+	}
 
 }
 
@@ -212,17 +225,13 @@ void columnChecker(parametros *p){
 
 	//store our boolean result
 	resSudoku[p->id] = flag;
-	//fprintf(stderr, "%s %d\n", "Saliendo de columnChecker y el resultado fue:", flag);
 
-	//This is where it would add itself to a mutex protected int. It can call a function called iApprove() or smth like that
-	//that acquires the lock and increments the variable.
-
-	/*
-	  if(flag){
-	   iApprove();
-	  }
-	 */
-
+	//Proteccion de seccion critica por acceso a variable comun entre threads.
+	if(flag){
+		pthread_mutex_lock (&mutexres);
+			acumRes += 1;
+		pthread_mutex_unlock (&mutexres);
+	}
 
 }
 
@@ -263,12 +272,11 @@ void squareChecker(parametros *p){
 	resSudoku[p->id] = flag;
 	fprintf(stderr, "%s %d\n", "Saliendo de squareChecker y el resultado fue:", flag);
 
-	//This is where it would add itself to a mutex protected int. It can call a function called iApprove() or smth like that
-	//that acquires the lock and increments the variable.
+	//Proteccion de seccion critica por acceso a variable comun entre threads.
+	if(flag){
+		pthread_mutex_lock (&mutexres);
+			acumRes += 1;
+		pthread_mutex_unlock (&mutexres);
+	}
 
-	/*
-	  if(flag){
-	   iApprove();
-	  }
-	*/
 }
