@@ -3,10 +3,10 @@
 #include <unistd.h>
 
 int matSudoku[9][9]; /* this data is shared by the thread(s) */
-int resSudoku[27]; //this will hold boolean values depending of the threads' results.
+int resSudoku = 0; //this will have a value of 27 when all threads are done working
 int acumRes = 0;
 
-pthread_mutex_t mutexres; //Variable to be able to mutex lock critical sections of threads.
+pthread_mutex_t mutexres,mutexcheck; //Variable to be able to mutex lock critical sections of threads.
 
 /*
 Help hint!!
@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 	int j = 0;
 
 	pthread_mutex_init(&mutexres, NULL); //Inicializamos correctamente la variable mutex
+	pthread_mutex_init(&mutexcheck, NULL);
 
 	parametros p[27]; //creamos un arreglo de estructuras tipo 'parametros'
 
@@ -118,26 +119,42 @@ int main(int argc, char *argv[])
 	}
 
 
-	//Aquí esta el join pero lo dejamos porque no debemos usar join...
+	//Aquí esta el join viejo...
 /*
 	for(i = 0; i < 27; i+=1){
 		pthread_join(tid[i],NULL); //esperar a todos los threads...
 	}
 */
 
-//En vez de un join, un sleep
-	sleep(0.5); //sleep for half a second
 
+//--------EN VEZ DEL JOIN!--------
 
-	for(i = 0; i < 27; i+=1){
-		printf("Resultado de thread %d: %d\n",i,resSudoku[i]);
+//Implementando que espere a que los threads acaben sin join (lo queria hacer con conditionals y signals pero no parece ad hoc)
+
+	int flag = 1;
+	while(flag){
+		pthread_mutex_lock (&mutexcheck);
+			if(resSudoku == 27){
+				pthread_mutex_unlock (&mutexcheck);
+				flag = 0;
+				printf("%s\n", "Ya acabaron los threads, podemos salir!!");
+			}else{
+				pthread_mutex_unlock (&mutexcheck);
+				printf("%s\n", "Todavia no acaban los threads...");
+			}
 	}
+	//Si salimos de este loop significa que todos los threads, aunque no necesariamente hayan hecho exit todavia, ya hicieron su trabajo.
 
 	if(acumRes == 27){
 		printf("%s\n", "El sudoku es valido!!");
 	}else{
 		printf("%s\n", "El sudoku NO es valido!!");
 	}
+
+	//Destruimos memoria que ya no utilizamos
+	pthread_mutex_destroy(&mutexres);
+	pthread_mutex_destroy(&mutexcheck);
+	pthread_attr_destroy(&attr);
 
 	return 0; //exit normally
 }
@@ -190,8 +207,7 @@ void rowChecker(parametros *p){
 		}
 	}
 
-	//store our boolean result
-	resSudoku[p->id] = flag;
+
 
 	//Proteccion de seccion critica por acceso a variable comun entre threads.
 	if(flag){
@@ -200,12 +216,15 @@ void rowChecker(parametros *p){
 		pthread_mutex_unlock (&mutexres);
 	}
 
+	//register completion
+	pthread_mutex_lock (&mutexcheck);
+		resSudoku  += 1;
+	pthread_mutex_unlock (&mutexcheck);
 }
 
 //funcion que sera 1
 void columnChecker(parametros *p){
 
-	printf("Soy un columnChecker con id %d\n", p->id);
 
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
@@ -223,9 +242,6 @@ void columnChecker(parametros *p){
 		}
 	}
 
-	//store our boolean result
-	resSudoku[p->id] = flag;
-
 	//Proteccion de seccion critica por acceso a variable comun entre threads.
 	if(flag){
 		pthread_mutex_lock (&mutexres);
@@ -233,14 +249,17 @@ void columnChecker(parametros *p){
 		pthread_mutex_unlock (&mutexres);
 	}
 
+	//register completion
+	pthread_mutex_lock (&mutexcheck);
+		resSudoku  += 1;
+	pthread_mutex_unlock (&mutexcheck);
+
 }
 
 
 
 //funcion que sera 2
 void squareChecker(parametros *p){
-
-	printf("Soy un squareChecker con id %d\n", p->id);
 
 	int arr[9]; //array to hold true values (1) for the numbers we have found.
 	int i = 0;
@@ -268,10 +287,6 @@ void squareChecker(parametros *p){
 		}
 	}
 
-	//store our boolean result
-	resSudoku[p->id] = flag;
-	fprintf(stderr, "%s %d\n", "Saliendo de squareChecker y el resultado fue:", flag);
-
 	//Proteccion de seccion critica por acceso a variable comun entre threads.
 	if(flag){
 		pthread_mutex_lock (&mutexres);
@@ -279,4 +294,8 @@ void squareChecker(parametros *p){
 		pthread_mutex_unlock (&mutexres);
 	}
 
+	//register completion
+	pthread_mutex_lock (&mutexcheck);
+		resSudoku  += 1;
+	pthread_mutex_unlock (&mutexcheck);
 }
