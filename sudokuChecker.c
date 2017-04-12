@@ -18,8 +18,6 @@ we use the lock with:
 
 */
 
-int semaphore = 1; //only one thread will be able to be in the critical section at a time. so start at one.
-
 void *runner(void *param); /* threads call this function */
 
 typedef struct {
