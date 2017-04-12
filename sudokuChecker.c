@@ -1,6 +1,5 @@
 #include <pthread.h>
 #include <stdio.h>
-#include <unistd.h>
 
 int matSudoku[9][9]; /* this data is shared by the thread(s) */
 int resSudoku = 0; //this will have a value of 27 when all threads are done working
